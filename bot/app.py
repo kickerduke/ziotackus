@@ -9,7 +9,7 @@ from bot.handlers import commands, member, message
 from bot.handlers.filters import AllowedChatFilter
 
 
-async def build_and_run() -> None:
+def build_and_run() -> None:
     config = Config.from_env()
 
     logging.basicConfig(
@@ -19,9 +19,10 @@ async def build_and_run() -> None:
     logger = logging.getLogger(__name__)
     logger.info("Starting ziotackus bot (allowed chat: %s)", config.allowed_chat_id)
 
-    await database.init_db(config.db_path)
+    async def post_init(application) -> None:
+        await database.init_db(config.db_path)
 
-    app = ApplicationBuilder().token(config.bot_token).build()
+    app = ApplicationBuilder().token(config.bot_token).post_init(post_init).build()
     app.bot_data["config"] = config
 
     chat_filter = AllowedChatFilter(config.allowed_chat_id)
@@ -37,4 +38,4 @@ async def build_and_run() -> None:
     )
     app.add_handler(ChatMemberHandler(member.on_chat_member_updated, ChatMemberHandler.MY_CHAT_MEMBER))
 
-    await app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES)

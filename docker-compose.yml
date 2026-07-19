@@ -1,7 +1,6 @@
 services:
   ziotackus:
-    image: ${ZIOTACKUS_IMAGE:-ziotackus-local}
-    build: .
+    image: ghcr.io/kickerduke/ziotackus:latest
     container_name: ziotackus
     restart: unless-stopped
     env_file:
