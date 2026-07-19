@@ -138,10 +138,14 @@ async def get_user_stats(db_path: str, chat_id: int) -> list[UserStat]:
                 l.user_id,
                 l.username,
                 l.first_name,
-                COUNT(DISTINCT l.id)   AS link_count,
-                COUNT(d.id)            AS duplicate_count
+                COUNT(l.id)                    AS link_count,
+                COALESCE(d.duplicate_count, 0) AS duplicate_count
             FROM links l
-            LEFT JOIN duplicates d ON d.user_id = l.user_id AND d.chat_id = l.chat_id
+            LEFT JOIN (
+                SELECT user_id, chat_id, COUNT(*) AS duplicate_count
+                FROM duplicates
+                GROUP BY user_id, chat_id
+            ) d ON d.user_id = l.user_id AND d.chat_id = l.chat_id
             WHERE l.chat_id = ?
             GROUP BY l.user_id
             ORDER BY link_count DESC
@@ -170,10 +174,14 @@ async def get_hall_of_shame(db_path: str, chat_id: int) -> list[UserStat]:
                 d.user_id,
                 d.username,
                 d.first_name,
-                COUNT(l.id)  AS link_count,
-                COUNT(d.id)  AS duplicate_count
+                COALESCE(l.link_count, 0) AS link_count,
+                COUNT(d.id)               AS duplicate_count
             FROM duplicates d
-            LEFT JOIN links l ON l.user_id = d.user_id AND l.chat_id = d.chat_id
+            LEFT JOIN (
+                SELECT user_id, chat_id, COUNT(*) AS link_count
+                FROM links
+                GROUP BY user_id, chat_id
+            ) l ON l.user_id = d.user_id AND l.chat_id = d.chat_id
             WHERE d.chat_id = ?
             GROUP BY d.user_id
             HAVING duplicate_count > 0
