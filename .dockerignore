@@ -1,0 +1,10 @@
+.venv/
+.git/
+.idea/
+data/
+__pycache__/
+*.pyc
+.env
+*.db
+*.md
+seed_from_export.py

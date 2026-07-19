@@ -1,0 +1,14 @@
+services:
+  ziotackus:
+    image: ${ZIOTACKUS_IMAGE:-ziotackus-local}
+    build: .
+    container_name: ziotackus
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - db_data:/app/data
+
+volumes:
+  db_data:
+    driver: local
