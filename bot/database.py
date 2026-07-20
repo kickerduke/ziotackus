@@ -185,7 +185,11 @@ async def get_hall_of_shame(db_path: str, chat_id: int) -> list[UserStat]:
             WHERE d.chat_id = ?
             GROUP BY d.user_id
             HAVING duplicate_count > 0
-            ORDER BY duplicate_count DESC
+            ORDER BY
+                CASE WHEN link_count > 0
+                    THEN CAST(duplicate_count AS REAL) / link_count
+                    ELSE 0
+                END DESC
             """,
             (chat_id,),
         ) as cursor:
