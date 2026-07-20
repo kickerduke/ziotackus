@@ -13,6 +13,18 @@ _TRACKING_PARAMS = frozenset({
     "ref", "source", "via",
 })
 
+_ALLOWED_DOMAINS = frozenset({
+    "9gag.com", "brickset.com", "fb.watch", "fb.me", "fumettologica.it",
+    "ideas.lego.com", "multiplayer.it", "rebrickable.com", "twitter.com",
+    "x.com", "brothers-brick.com", "everyeye.it", "facebook.com",
+    "figuresinaction.com", "flickr.com", "instagram.com", "lego.com",
+    "lercio.it", "youtube.com", "youtube-nocookie.com", "youtu.be",
+})
+
+
+def _is_allowed_domain(netloc: str) -> bool:
+    return any(d in netloc for d in _ALLOWED_DOMAINS)
+
 
 def extract_and_normalize_urls(text: str) -> list[tuple[str, str]]:
     """Return list of (original_url, normalized_url) pairs found in text."""
@@ -28,13 +40,16 @@ def extract_and_normalize_urls(text: str) -> list[tuple[str, str]]:
     return result
 
 
-def _normalize(url: str) -> str:
+def _normalize(url: str) -> str | None:
     try:
         parsed = urlparse(url)
     except Exception:
         return url
 
     netloc = parsed.netloc.lower()
+
+    if not _is_allowed_domain(netloc):
+        return None
 
     if _is_youtube(netloc):
         return _normalize_youtube(parsed) or _generic_normalize(parsed)
