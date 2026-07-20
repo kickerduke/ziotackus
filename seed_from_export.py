@@ -128,6 +128,7 @@ def seed(export_path: str, chat_id: int, db_path: str) -> None:
     inserted = 0
     duplicates = 0
     skipped = 0
+    self_reposts = 0
 
     for msg in messages:
         if msg.get("type") != "message":
@@ -151,7 +152,7 @@ def seed(export_path: str, chat_id: int, db_path: str) -> None:
 
         for original_url, normalized_url in url_pairs:
             existing = conn.execute(
-                "SELECT id FROM links WHERE chat_id = ? AND normalized_url = ?",
+                "SELECT id, user_id FROM links WHERE chat_id = ? AND normalized_url = ?",
                 (chat_id, normalized_url),
             ).fetchone()
 
@@ -163,6 +164,9 @@ def seed(export_path: str, chat_id: int, db_path: str) -> None:
                     (chat_id, normalized_url, original_url, user_id, None, from_name, msg_id, posted_at),
                 )
                 inserted += 1
+            elif existing["user_id"] == user_id:
+                # Reposted by the original poster → not a real duplicate, skip silently
+                self_reposts += 1
             else:
                 conn.execute(
                     "INSERT INTO duplicates "
@@ -178,6 +182,7 @@ def seed(export_path: str, chat_id: int, db_path: str) -> None:
     print(f"Seeding completato!")
     print(f"  Link unici importati : {inserted}")
     print(f"  Duplicati trovati    : {duplicates}")
+    print(f"  Repost dallo stesso autore ignorati : {self_reposts}")
     print(f"  Messaggi saltati     : {skipped}")
 
 

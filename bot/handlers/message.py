@@ -34,9 +34,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         existing = await database.find_existing_link(config.db_path, chat_id, normalized_url)
 
         if existing is not None:
-            # Guard: same user, same message → idempotent reprocessing, skip silently
-            if existing.user_id == user.id and existing.message_id == msg.message_id:
-                logger.debug("Skipping reprocessed message %s (idempotent)", msg.message_id)
+            # Guard: reposted by the original poster → not a real duplicate, skip silently
+            if existing.user_id == user.id:
+                logger.debug(
+                    "Skipping repost by original poster %s (message %s)",
+                    user.id,
+                    msg.message_id,
+                )
                 continue
 
             shamer = messages.display_name(user.username, user.first_name)
