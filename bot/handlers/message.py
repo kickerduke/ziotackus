@@ -28,12 +28,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if user is None:
         return
 
-    posted_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    posted_at = msg.date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     for original_url, normalized_url in url_pairs:
         existing = await database.find_existing_link(config.db_path, chat_id, normalized_url)
 
         if existing is not None:
+            # Guard: same user, same message → idempotent reprocessing, skip silently
+            if existing.user_id == user.id and existing.message_id == msg.message_id:
+                logger.debug("Skipping reprocessed message %s (idempotent)", msg.message_id)
+                continue
+
             shamer = messages.display_name(user.username, user.first_name)
             og_poster = messages.display_name(existing.username, existing.first_name)
             shame_text = messages.pick_shame_message(shamer, og_poster, existing.posted_at)

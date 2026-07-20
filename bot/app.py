@@ -38,4 +38,4 @@ def build_and_run() -> None:
     )
     app.add_handler(ChatMemberHandler(member.on_chat_member_updated, ChatMemberHandler.MY_CHAT_MEMBER))
 
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
